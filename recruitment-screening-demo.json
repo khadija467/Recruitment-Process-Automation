@@ -12,7 +12,7 @@
         },
         "documentId": {
           "__rl": true,
-          "value": "12QnF6Xp0mfS4hCUimFgZXJLBSHa9-KgGP4jzIVYKLZ0",
+          "value": "**********************************",
           "mode": "list",
           "cachedResultName": "JOB DEMO (Responses)",
           "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12QnF6Xp0mfS4hCUimFgZXJLBSHa9-KgGP4jzIVYKLZ0/edit?usp=drivesdk"
@@ -98,7 +98,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=AQ.Ab8RN6KKMS7IYmzfVgnVqL_zlYDz5gtii_Ucug7PBd1cbh0SRw",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=YOUR-GEMINI-API-KEY",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"contents\": [{\n    \"parts\": [{\n      \"text\": \"You are screening a candidate for an AI Automations Engineer role requiring n8n, Zapier/Make, Python, APIs, and 1-3 years experience. Candidate skills: {{ $json.skills_text }}. Experience: {{ $json.experience_years }} years. Return ONLY valid JSON with no markdown formatting and no explanation, in exactly this shape: {\\\"score\\\": 0-100, \\\"tag\\\": \\\"Shortlist\\\", \\\"reason\\\": \\\"one short sentence\\\"} where tag must be exactly one of Shortlist, Review, or Reject.\"\n    }]\n  }],\n  \"generationConfig\": {\n    \"temperature\": 0.2\n  }\n}",
@@ -240,7 +240,7 @@
     },
     {
       "parameters": {
-        "sendTo": "itzmalik472@gmail.com",
+        "sendTo": "your-gmail",
         "subject": "=Review Needed: {{ $json.name }}",
         "message": "=Candidate: {{ $json.name }}\nEmail: {{ $json.email }}\nRole: {{ $json.role }}\nScore: {{ $json.score }}\nTag: {{ $json.tag }}\nReason: {{ $json.reason }}\nResume: {{ $json.resume_link }}",
         "options": {}
