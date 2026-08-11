@@ -1,0 +1,515 @@
+{
+  "name": "AI Recruitment Screening Demo",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "12QnF6Xp0mfS4hCUimFgZXJLBSHa9-KgGP4jzIVYKLZ0",
+          "mode": "list",
+          "cachedResultName": "JOB DEMO (Responses)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12QnF6Xp0mfS4hCUimFgZXJLBSHa9-KgGP4jzIVYKLZ0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 305270074,
+          "mode": "list",
+          "cachedResultName": "Form responses 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12QnF6Xp0mfS4hCUimFgZXJLBSHa9-KgGP4jzIVYKLZ0/edit#gid=305270074"
+        },
+        "event": "rowAdded",
+        "options": {}
+      },
+      "id": "f1b9b2e1-11a4-4a6c-93ca-5f3e2fa2c3e8",
+      "name": "New Application (Form Sheet)",
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        -112,
+        256
+      ],
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "snC10xacc8teiBAZ",
+          "name": "Google Sheets Trigger account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "name",
+              "value": "={{ $json['Name'] }}",
+              "type": "string"
+            },
+            {
+              "id": "a2",
+              "name": "email",
+              "value": "={{ $json['Email'] }}",
+              "type": "string"
+            },
+            {
+              "id": "a3",
+              "name": "role",
+              "value": "=\t{{ $json['Role Applied For:']}}",
+              "type": "string"
+            },
+            {
+              "id": "a4",
+              "name": "skills_text",
+              "value": "={{ $json['Skills/Experience'] }}",
+              "type": "string"
+            },
+            {
+              "id": "a5",
+              "name": "experience_years",
+              "value": "={{ $json['Skills/Experience'] }}",
+              "type": "string"
+            },
+            {
+              "id": "a6",
+              "name": "resume_link",
+              "value": "={{ $json['Resume Link'] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a959165f-0f08-4b5a-bba5-1e1de8af6f7a",
+      "name": "Structure Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        112,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=AQ.Ab8RN6KKMS7IYmzfVgnVqL_zlYDz5gtii_Ucug7PBd1cbh0SRw",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [{\n    \"parts\": [{\n      \"text\": \"You are screening a candidate for an AI Automations Engineer role requiring n8n, Zapier/Make, Python, APIs, and 1-3 years experience. Candidate skills: {{ $json.skills_text }}. Experience: {{ $json.experience_years }} years. Return ONLY valid JSON with no markdown formatting and no explanation, in exactly this shape: {\\\"score\\\": 0-100, \\\"tag\\\": \\\"Shortlist\\\", \\\"reason\\\": \\\"one short sentence\\\"} where tag must be exactly one of Shortlist, Review, or Reject.\"\n    }]\n  }],\n  \"generationConfig\": {\n    \"temperature\": 0.2\n  }\n}",
+        "options": {}
+      },
+      "id": "90f2a887-1f46-4721-87c4-6771f8c90173",
+      "name": "Gemini Screening",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        336,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.candidates[0].content.parts[0].text;\nconst cleaned = raw.replace(/```json/g, '').replace(/```/g, '').trim();\nconst parsed = JSON.parse(cleaned);\nconst original = $('Structure Data').first().json;\nreturn [{\n  json: {\n    ...original,\n    score: parsed.score,\n    tag: parsed.tag,\n    reason: parsed.reason\n  }\n}];"
+      },
+      "id": "5fd1a781-b6c9-4359-ac0e-57e90dd39106",
+      "name": "Parse AI Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "c1",
+                    "leftValue": "={{ $json.tag }}",
+                    "rightValue": "Shortlist",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Shortlist"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "c2",
+                    "leftValue": "={{ $json.tag }}",
+                    "rightValue": "Review",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Review"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "c3",
+                    "leftValue": "={{ $json.tag }}",
+                    "rightValue": "Reject",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Reject"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "108b134c-c01d-4b36-9b16-52a66f5f0e4c",
+      "name": "Route by Tag",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        768,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "itzmalik472@gmail.com",
+        "subject": "=New Shortlisted Candidate: {{ $json.name }}",
+        "message": "=Candidate: {{ $json.name }}\nEmail: {{ $json.email }}\nRole: {{ $json.role }}\nScore: {{ $json.score }}\nTag: {{ $json.tag }}\nReason: {{ $json.reason }}\nResume: {{ $json.resume_link }}",
+        "options": {}
+      },
+      "id": "6d8522f4-24b3-4940-b25d-611369e8d4de",
+      "name": "Notify - Shortlist",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1008,
+        112
+      ],
+      "webhookId": "6c10d3aa-445b-497b-a2d3-4fd4997249c0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "JwwqGZejZYRaDgXq",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "itzmalik472@gmail.com",
+        "subject": "=Review Needed: {{ $json.name }}",
+        "message": "=Candidate: {{ $json.name }}\nEmail: {{ $json.email }}\nRole: {{ $json.role }}\nScore: {{ $json.score }}\nTag: {{ $json.tag }}\nReason: {{ $json.reason }}\nResume: {{ $json.resume_link }}",
+        "options": {}
+      },
+      "id": "1d6239e6-8cf2-46f7-b4ea-d388e27eaf27",
+      "name": "Notify - Review",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1008,
+        256
+      ],
+      "webhookId": "3ecde1e4-807c-4f4a-8933-e74b683348e1",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "JwwqGZejZYRaDgXq",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1d5zlfObbJumITzu0YM1Ao9MQN1Ba_wFRULYPbZMT0IA",
+          "mode": "list",
+          "cachedResultName": "Candidate Tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1d5zlfObbJumITzu0YM1Ao9MQN1Ba_wFRULYPbZMT0IA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1d5zlfObbJumITzu0YM1Ao9MQN1Ba_wFRULYPbZMT0IA/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $('Parse AI Response').item.json.name }}",
+            "Email": "={{ $('Parse AI Response').item.json.email }}",
+            "Role": "={{ $('Parse AI Response').item.json.role }}",
+            "Score": "={{ $('Parse AI Response').item.json.score }}",
+            "Tag": "={{ $('Parse AI Response').item.json.tag }}",
+            "Reason": "={{ $('Parse AI Response').item.json.reason }}",
+            "Experience Years": "={{ $('Parse AI Response').item.json.experience_years }}",
+            "Resume Link": "={{ $('Parse AI Response').item.json.resume_link }}",
+            "Timestamp": "={{ $now }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Role",
+              "displayName": "Role",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Score",
+              "displayName": "Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Tag",
+              "displayName": "Tag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Reason",
+              "displayName": "Reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Experience Years",
+              "displayName": "Experience Years",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Resume Link",
+              "displayName": "Resume Link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "c025cac0-7291-4718-b3a9-3b302f7f2877",
+      "name": "Log Candidate",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1248,
+        256
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "8fHJIDRuL7INzrpk",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "New Application (Form Sheet)": {
+      "main": [
+        [
+          {
+            "node": "Structure Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structure Data": {
+      "main": [
+        [
+          {
+            "node": "Gemini Screening",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Screening": {
+      "main": [
+        [
+          {
+            "node": "Parse AI Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI Response": {
+      "main": [
+        [
+          {
+            "node": "Route by Tag",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Tag": {
+      "main": [
+        [
+          {
+            "node": "Notify - Shortlist",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notify - Review",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Candidate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify - Shortlist": {
+      "main": [
+        [
+          {
+            "node": "Log Candidate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify - Review": {
+      "main": [
+        [
+          {
+            "node": "Log Candidate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "b255eda2-91a3-4766-b890-2af36b3442ff",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d27878018d6729a9176aeeb0cca474bb29edbe9310ba443adbcc1881e6f28337"
+  },
+  "nodeGroups": [],
+  "id": "kLke7th31Rn8x6UB",
+  "tags": []
+}
